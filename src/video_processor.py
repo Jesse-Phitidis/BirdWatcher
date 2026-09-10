@@ -14,7 +14,7 @@ allowed_batch_sizes = [1,2,4,8,16,32,64,128]
 class VideoProcessor:
 
     def __init__(self):
-        self.class_mapping = pd.read_csv("assets/classes/class_mapping.csv")
+        self.class_mapping = pd.read_csv(Path("assets/classes/class_mapping.csv"))
 
     def process(
             self,
