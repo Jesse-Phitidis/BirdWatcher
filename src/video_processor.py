@@ -27,7 +27,8 @@ class VideoProcessor:
             box_conf_threshold: float,
             class_conf_threshold: float,
             progress_callback: Callable,
-            cancel_event: threading.Event
+            cancel_event: threading.Event,
+            multi_colour: bool = False,
     ):
 
         ### 1. set up ###
@@ -126,11 +127,17 @@ class VideoProcessor:
                 frame_idx = i * sampling_rate
                 cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
                 _, frame = cap.read()
-                marked_frame = self.draw_frame(frame, frame_boxes, classifications[i], probabilities[i])
+                marked_frame = self.draw_frame(
+                    frame,
+                    frame_boxes,
+                    classifications[i],
+                    probabilities[i],
+                    multi_colour,
+                )
                 seconds = int(frame_idx / fps)
                 hours, seconds_remaining = divmod(seconds, 3600)    
                 minutes, seconds = divmod(seconds_remaining, 60)
-                timestamp = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                timestamp = f"{hours:02d}h{minutes:02d}m{seconds:02d}s"
                 for name in classifications[i]:
                     name_dir = (output_dir / name)
                     name_dir.mkdir(exist_ok=True)
@@ -142,14 +149,23 @@ class VideoProcessor:
                     "Saving output",
                 )
                     
-    def draw_frame(self, frame: np.ndarray, boxes: list, names: list, probs: list) -> np.ndarray:
+    def draw_frame(
+            self,
+            frame: np.ndarray,
+            boxes: list,
+            names: list,
+            probs: list,
+            multi_colour: bool = False,
+    ) -> np.ndarray:
         for box, name, prob in zip(boxes, names, probs):
             if name == "Unknown":
-                R,G,B = 255, 255, 255
-            else:
+                R, G, B = 255, 255, 255
+            elif multi_colour:
                 R = int(self.class_mapping.loc[self.class_mapping["label"] == name, "r"].values[0])
                 G = int(self.class_mapping.loc[self.class_mapping["label"] == name, "g"].values[0])
                 B = int(self.class_mapping.loc[self.class_mapping["label"] == name, "b"].values[0])
+            else:
+                R, G, B = 255, 0, 0
             x1, y1, x2, y2 = [int(x) for x in box]
             x1 = max(0, x1 - 5)
             y1 = max(0, y1 - 5)
@@ -160,8 +176,8 @@ class VideoProcessor:
                 )
             tag = name.replace("_", " ") + (f" [{np.round(100*prob, 0):.0f}%]" if name != "Unknown" else "")
             font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 2.0
-            text_thickness = 3
+            font_scale = 1.0
+            text_thickness = 4
             (text_width, text_height), baseline = cv2.getTextSize(
                 tag, font, font_scale, text_thickness
             )
