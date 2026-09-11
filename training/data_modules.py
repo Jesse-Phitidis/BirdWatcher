@@ -1,7 +1,6 @@
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
 from pathlib import Path
-from torchvision.transforms import v2 as transforms
 import torch
 from PIL import Image
 import pandas as pd

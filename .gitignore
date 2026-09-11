@@ -6,7 +6,7 @@ dataset/birds/withBackgroundOriginal
 assets/models
 
 .gitignore
-.venv
+.venv*
 .DS_Store
 *__pycache__
 
