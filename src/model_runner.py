@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.special import softmax
 from pathlib import Path
+from utils import get_asset_path
 
 
 gpu_providers = [
@@ -34,7 +35,7 @@ class DetectionModel:
 
         self.batch_size = batch_size
         self.threshold = threshold
-        self.model = YOLO(Path(f"assets/models/yolo26x_b{batch_size}.onnx"), task="detect")
+        self.model = YOLO(get_asset_path(f"assets/models/yolo26x_b{batch_size}.onnx"), task="detect")
 
     def __call__(self, x: list) -> tuple[list[list], int]:
         short = self.batch_size - len(x)
@@ -60,8 +61,8 @@ class ClassificationModel:
         providers = gpu_providers if use_gpu else cpu_providers
         self.batch_size = batch_size
         self.threshold = threshold
-        self.model = ort.InferenceSession(Path(f"assets/models/classifier_b{batch_size}.onnx"), providers=providers)
-        self.class_mapping = pd.read_csv(Path("assets/classes/class_mapping.csv"))
+        self.model = ort.InferenceSession(get_asset_path(f"assets/models/classifier_b{batch_size}.onnx"), providers=providers)
+        self.class_mapping = pd.read_csv(get_asset_path("assets/classes/class_mapping.csv"))
     
     def __call__(self, x: list) -> list:
         short = self.batch_size - len(x)
