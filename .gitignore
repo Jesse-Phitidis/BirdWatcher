@@ -13,3 +13,7 @@ assets/models
 *.png
 *jpg
 *.mp4
+
+build
+dist
+BirdWatcher.spec

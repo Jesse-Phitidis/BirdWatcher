@@ -424,9 +424,10 @@ class BirdWatcherApp:
 
 
 def main():
-	root = tk.Tk()
-	BirdWatcherApp(root)
-	root.mainloop()
+
+    root = tk.Tk()
+    BirdWatcherApp(root)
+    root.mainloop()
 
 
 if __name__ == "__main__":
