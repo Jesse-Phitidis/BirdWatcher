@@ -127,10 +127,13 @@ class VideoProcessor:
                 _, frame = cap.read()
                 marked_frame = self.draw_frame(frame, frame_boxes, classifications[i], probabilities[i])
                 seconds = int(frame_idx / fps)
+                hours, seconds_remaining = divmod(seconds, 3600)    
+                minutes, seconds = divmod(seconds_remaining, 60)
+                timestamp = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
                 for name in classifications[i]:
                     name_dir = (output_dir / name)
                     name_dir.mkdir(exist_ok=True)
-                    file_path = name_dir / f"{seconds}.png"
+                    file_path = name_dir / f"{timestamp}.png"
                     cv2.imwrite(file_path, marked_frame)
                 output_frames_processed += 1
                 progress_callback(
@@ -147,17 +150,34 @@ class VideoProcessor:
                 G = int(self.class_mapping.loc[self.class_mapping["label"] == name, "g"].values[0])
                 B = int(self.class_mapping.loc[self.class_mapping["label"] == name, "b"].values[0])
             x1, y1, x2, y2 = [int(x) for x in box]
-            y_text_offset = -15 if y1 > 15 else +15
-            cv2.rectangle(frame, (x1, y1), (x2, y2), color=(B,G,R), thickness=3)
+            x1 = max(0, x1 - 5)
+            y1 = max(0, y1 - 5)
+            x2 = min(frame.shape[1], x2 + 5)
+            y2 = min(frame.shape[0], y2 + 5) 
+            cv2.rectangle(
+                frame, (x1, y1), (x2, y2), color=(B,G,R), thickness=4
+                )
             tag = name.replace("_", " ") + (f" [{np.round(100*prob, 0):.0f}%]" if name != "Unknown" else "")
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 2.0
+            text_thickness = 3
+            (text_width, text_height), baseline = cv2.getTextSize(
+                tag, font, font_scale, text_thickness
+            )
+
+            text_x = min(x1, max(0, frame.shape[1] - text_width))
+            text_y = y1 - 15 - baseline
+            if text_y - text_height - baseline < 0:
+                text_y = y2 + 15 + text_height + baseline
+            text_y = min(max(text_y, text_height + baseline), frame.shape[0])
             cv2.putText(
                 frame, 
                 tag, 
-                org=(x1, y1 + y_text_offset),
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
-                fontScale=2.0, 
+                org=(text_x, text_y),
+                fontFace=font,
+                fontScale=font_scale,
                 color=(B,G,R), 
-                thickness=3
+                thickness=text_thickness
             )
         return frame
 

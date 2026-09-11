@@ -9,6 +9,20 @@ from video_processor import VideoProcessor
 
 ALLOWED_BATCH_SIZES = (1, 2, 4, 8, 16, 32, 64, 128)
 
+gpu_info = "Select to accelerate processing on devices with an NVIDIA GPU or Apple M-Series chip. \
+Falls back to CPU if no accelerator is available."
+
+batch_size_info = "Larger batch sizes can speed up processing, but require more memory."
+
+sampling_interval_info = "The number of seconds between analysed video frames."
+
+box_confidence_threshold_info = "Out of the objects which the AI model thinks are birds, \
+only those with a confidence level above this threshold will be considered as actual birds. \
+Recommended default is 0.0 but increase the threshold if you are getting lots of false positive detections."
+
+class_confidence_threshold_info = "How confident should the AI model be before classifying a bird. \
+Recommended default is 0.90-0.99. Increase the threshold if you are getting lots incorrect classifications. \
+Any bird for which the AI's confidence is below this threshold gets classed as 'Unknown'."
 
 class BirdWatcherApp:
 	def __init__(self, root: tk.Tk):
@@ -22,8 +36,8 @@ class BirdWatcherApp:
 		self.sample_interval = tk.StringVar(value="1.0")
 		self.use_gpu = tk.BooleanVar(value=False)
 		self.batch_size = tk.StringVar(value="1")
-		self.box_threshold = tk.StringVar(value="50")
-		self.class_threshold = tk.StringVar(value="50")
+		self.box_threshold = tk.StringVar(value="0.0")
+		self.class_threshold = tk.StringVar(value="0.90")
 		self.detection_progress = tk.DoubleVar(value=0)
 		self.classification_progress = tk.DoubleVar(value=0)
 		self.output_progress = tk.DoubleVar(value=0)
@@ -79,7 +93,7 @@ class BirdWatcherApp:
 			row=2, column=1, sticky="w", padx=(12, 8), pady=6
 		)
 		self._info_button(
-			container, 2, "Sampling interval", "Template description for the sampling interval."
+			container, 2, "Sampling interval", sampling_interval_info
 		)
 
 		self.advanced_button = ttk.Button(
@@ -130,7 +144,7 @@ class BirdWatcherApp:
 			row=0, column=0, columnspan=2, sticky="w", pady=5
 		)
 		self._info_button(
-			self.advanced_frame, 0, "Use GPU", "Template description for GPU acceleration.", column=2
+			self.advanced_frame, 0, "Use GPU", gpu_info, column=2
 		)
 
 		ttk.Label(self.advanced_frame, text="Batch size").grid(
@@ -145,7 +159,7 @@ class BirdWatcherApp:
 		)
 		self.batch_menu.grid(row=1, column=1, sticky="w", padx=(12, 8), pady=5)
 		self._info_button(
-			self.advanced_frame, 1, "Batch size", "Template description for the batch size.", column=2
+			self.advanced_frame, 1, "Batch size", batch_size_info, column=2
 		)
 
 		self._add_threshold_setting(
@@ -168,18 +182,24 @@ class BirdWatcherApp:
 		ttk.Scale(
 			self.advanced_frame,
 			from_=0,
-			to=100,
+			to=1,
 			variable=variable,
 			orient="horizontal",
 		).grid(row=row, column=1, sticky="ew", padx=(12, 8), pady=5)
 		ttk.Entry(self.advanced_frame, textvariable=variable, width=6).grid(
 			row=row, column=2, sticky="e", pady=5
 		)
+
+		if label == "Box confidence threshold":
+			info_text = box_confidence_threshold_info
+		if label == "Class confidence threshold":
+			info_text = class_confidence_threshold_info
+
 		self._info_button(
 			self.advanced_frame,
 			row,
 			title,
-			f"Template description for {label.lower()}.",
+			info_text,
 			column=3,
 		)
 
@@ -259,8 +279,8 @@ class BirdWatcherApp:
 				sample_interval,
 				use_gpu,
 				batch_size,
-				box_threshold / 100,
-				class_threshold / 100,
+				box_threshold,
+				class_threshold,
 			),
 			daemon=True,
 		)
@@ -297,10 +317,10 @@ class BirdWatcherApp:
 			box_threshold = float(self.box_threshold.get())
 			class_threshold = float(self.class_threshold.get())
 		except ValueError:
-			messagebox.showerror("Invalid confidence threshold", "Enter a value from 0 to 100.")
+			messagebox.showerror("Invalid confidence threshold", "Enter a value from 0 to 1.")
 			return None
-		if not 0 <= box_threshold <= 100 or not 0 <= class_threshold <= 100:
-			messagebox.showerror("Invalid confidence threshold", "Enter a value from 0 to 100.")
+		if not 0 <= box_threshold <= 1 or not 0 <= class_threshold <= 1:
+			messagebox.showerror("Invalid confidence threshold", "Enter a value from 0 to 1.")
 			return None
 		return video, output, interval, batch_size, box_threshold, class_threshold
 

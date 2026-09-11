@@ -1,0 +1,128 @@
+model:
+  class_path: lightning_modules.ClassifierLightningModule 
+  init_args:
+    model_name: convnextv2_pico.fcmae_ft_in1k
+    num_classes: 20
+    loss_fn:
+      class_path: torch.nn.CrossEntropyLoss
+    class_mapping_csv_path: dataset/class_mapping.csv
+data:
+  class_path: data_modules.ClassifierDataModule 
+  init_args:
+    train_csv_path: dataset/train.csv
+    test_csv_path: dataset/test.csv
+    dataset_path: dataset/birds
+    train_transforms:
+      class_path: torchvision.transforms.v2.Compose
+      init_args:
+        transforms:
+          - class_path: torchvision.transforms.v2.Compose
+            init_args:
+              transforms:
+                - class_path: torchvision.transforms.v2.ToImage
+                - class_path: torchvision.transforms.v2.ToDtype
+                  init_args:
+                    dtype: torch.float32
+                    scale: true
+          - class_path: torchvision.transforms.v2.ColorJitter
+            init_args:
+              brightness: 0.1
+              contrast: 0.1
+              saturation: 0.1
+              hue: 0.1
+          - class_path: torchvision.transforms.v2.RandomApply
+            init_args:
+              p: 0.25
+              transforms:
+                - class_path: torchvision.transforms.v2.GaussianBlur
+                  init_args:
+                    kernel_size: [5, 9]
+                    sigma: [0.1, 5.0]
+          - class_path: torchvision.transforms.v2.RandomApply
+            init_args:
+              p: 0.25
+              transforms:
+                - class_path: torchvision.transforms.v2.GaussianNoise
+                  init_args:
+                    mean: 0.0
+                    sigma: 0.1
+          - class_path: torchvision.transforms.v2.RandomAdjustSharpness
+            init_args:
+              sharpness_factor: 2.0
+              p: 0.1
+          - class_path: torchvision.transforms.v2.RandomAffine
+            init_args:
+              degrees: 45
+              shear: [-10, 10, -10, 10]
+          - class_path: torchvision.transforms.v2.RandomVerticalFlip
+            init_args:
+              p: 0.15
+          - class_path: transforms.RandomLowResolution 
+            init_args:
+              factor_range: [1, 4]
+              p: 0.3
+          - class_path: torchvision.transforms.v2.Normalize
+            init_args:
+              mean: [0.485, 0.456, 0.406]
+              std: [0.229, 0.224, 0.225]
+    test_transforms:
+      class_path: torchvision.transforms.v2.Compose
+      init_args:
+        transforms:
+          - class_path: torchvision.transforms.v2.ToImage
+          - class_path: torchvision.transforms.v2.ToDtype
+            init_args:
+              dtype: torch.float32
+              scale: true
+          - class_path: torchvision.transforms.v2.Normalize
+            init_args:
+              mean: [0.485, 0.456, 0.406]
+              std: [0.229, 0.224, 0.225]
+    batch_size: 128
+    num_workers: 4
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 0.0003
+    weight_decay: 0.01
+lr_scheduler:
+  class_path: schedulers.WarmupCosineLR
+  init_args:
+    warmup_epochs: 10
+    max_epochs: ${trainer.max_epochs}
+    start_factor: 0.1
+    eta_min: 0.0
+trainer:
+  logger:
+    class_path: pytorch_lightning.loggers.WandbLogger
+    init_args:
+      project: BirdClassifier
+      log_model: false
+      save_dir: logs/version_004
+      name: version_004
+  accelerator: mps
+  precision: bf16-mixed
+  max_epochs: 40
+  check_val_every_n_epoch: 1
+  log_every_n_steps: 1 # not used since we log per epoch anyway
+  callbacks:
+    - class_path: pytorch_lightning.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: epoch
+    - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+      init_args:
+        filename: epoch={epoch}-f1={val_f1:.3f}
+        auto_insert_metric_name: false
+        monitor: val_f1
+        mode: max
+        every_n_epochs: ${trainer.check_val_every_n_epoch}
+        save_on_train_epoch_end: true
+    - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+      init_args:
+        filename: epoch={epoch}
+        auto_insert_metric_name: false
+        monitor: epoch
+        mode: max
+        every_n_epochs: ${trainer.check_val_every_n_epoch}
+        save_on_train_epoch_end: true
+seed_everything: 0
