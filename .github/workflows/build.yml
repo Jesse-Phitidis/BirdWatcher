@@ -1,0 +1,183 @@
+name: Build and release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Version tag for the GitHub release, for example v1.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: "3.12.13"
+  MODEL_RELEASE: "model-assets-v1"
+  MODEL_BASE_URL: "https://github.com/Jesse-Phitidis/BirdWatcher/releases/download/model-assets-v1"
+
+jobs:
+  resolve-release:
+    name: Resolve release tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Resolve tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.release_tag }}
+          REF_NAME: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            tag="$INPUT_TAG"
+          else
+            tag="$REF_NAME"
+          fi
+
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tag must match vMAJOR.MINOR.PATCH, optionally with a prerelease suffix: $tag" >&2
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.os }}
+    needs: resolve-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            runner_os: Windows
+            archive_extension: zip
+          - os: macos-latest
+            runner_os: macOS
+            archive_extension: zip
+          - os: ubuntu-latest
+            runner_os: Linux
+            archive_extension: zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements-build.txt
+
+      - name: Install build dependencies
+        run: python -m pip install -r requirements-build.txt
+
+      - name: Download and verify model assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/models
+
+          declare -A checksums=(
+            [classifier_b1.onnx]=1ff86d7aa1cc3b6ffc621a1afe7080b4c0556d3131002aa31ba9cb8f1a157335
+            [classifier_b1.onnx.data]=ff17d2f67e1cfe8450c78150938c023190d4243b7d9edfc60b9470af1cb1cd12
+            [classifier_b128.onnx]=1802c036a83ccd4bff1a9ac4944919fdd6854dbb15993c18e3632c2e770eced3
+            [classifier_b128.onnx.data]=ff17d2f67e1cfe8450c78150938c023190d4243b7d9edfc60b9470af1cb1cd12
+            [classifier_b32.onnx]=08ecbc260415aa30e2bba9a0aeea804eda19e08160a5d4266fa4fd1a75e1c4d6
+            [classifier_b32.onnx.data]=ff17d2f67e1cfe8450c78150938c023190d4243b7d9edfc60b9470af1cb1cd12
+            [yolo26m_b1.onnx]=6d49a965652ecb06e23667445ed97fda930a763903c8b9854f05787a2561b5c6
+            [yolo26m_b128.onnx]=1f54e176b3523bc7e79905e75e6db2d77dfcb3046d8a8ea4132b0662347c6226
+            [yolo26m_b32.onnx]=b0b469d2e307edb7d1a03aae08ae07a8c018ed113186542ff7c7e3f9ebe1cf6f
+            [yolo26x_b1.onnx]=92e24265890704063a20bcab62913358bf1bbbaf75d8643c12ab9d809cb2a12a
+            [yolo26x_b128.onnx]=a1b69fe0c9a4731a63f18d625e2e32df004a07bfdb4f27fd910d6978fe1c5617
+            [yolo26x_b32.onnx]=93f80e176482847d372085f352c7663068501eaa5c2b3ecdd5b333947a464f4d1
+          )
+
+          for filename in "${!checksums[@]}"; do
+            curl --fail --location --retry 3 --output "assets/models/$filename" "$MODEL_BASE_URL/$filename"
+            printf '%s  %s\n' "${checksums[$filename]}" "assets/models/$filename" | sha256sum --check --status
+          done
+
+      - name: Build application
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            data_separator=';'
+            icon_args=(--icon "assets/icons/icon.ico")
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            data_separator=':'
+            icon_args=(--icon "assets/icons/icon.icns")
+          else
+            data_separator=':'
+            icon_args=()
+          fi
+
+          pyinstaller \
+            --name BirdWatcher \
+            "${icon_args[@]}" \
+            --windowed \
+            --add-data "assets${data_separator}assets" \
+            --collect-all onnxruntime \
+            birdwatcher/app.py
+
+      - name: Package application
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.resolve-release.outputs.tag }}
+          PLATFORM_NAME: ${{ matrix.runner_os }}
+          ARCHIVE_EXTENSION: ${{ matrix.archive_extension }}
+        run: |
+          set -euo pipefail
+          archive="BirdWatcher-${PLATFORM_NAME}-${RUNNER_ARCH}-${RELEASE_TAG}.${ARCHIVE_EXTENSION}"
+          python - "$archive" <<'PY'
+          import sys
+          import zipfile
+          from pathlib import Path
+
+          archive = Path(sys.argv[1])
+          source = Path("dist/BirdWatcher")
+          if not source.exists():
+              raise SystemExit(f"PyInstaller output not found: {source}")
+
+          with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as output:
+              for path in source.rglob("*"):
+                  if path.is_file():
+                      output.write(path, Path("BirdWatcher") / path.relative_to(source))
+          PY
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BirdWatcher-${{ matrix.runner_os }}-${{ runner.arch }}
+          path: BirdWatcher-*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish GitHub release
+    needs:
+      - resolve-release
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: BirdWatcher-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.resolve-release.outputs.tag }}
+          name: BirdWatcher ${{ needs.resolve-release.outputs.tag }}
+          generate_release_notes: true
+          files: release-assets/*.zip
