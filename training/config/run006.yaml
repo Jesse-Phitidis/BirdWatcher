@@ -99,7 +99,7 @@ trainer:
     init_args:
       project: BirdClassifier
       log_model: false
-      save_dir: logs/version_006
+      save_dir: models/version_006
       name: version_006
   accelerator: mps
   precision: bf16-mixed

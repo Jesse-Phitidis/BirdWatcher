@@ -1,1 +1,1 @@
-pyinstaller --name BirdWatcher --windowed --add-data "assets:assets" --collect-all "onnxruntime" src/app.py
+pyinstaller --name BirdWatcher --windowed --add-data "assets:assets" --collect-all "onnxruntime" birdwatcher/app.py

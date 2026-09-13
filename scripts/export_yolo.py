@@ -6,8 +6,8 @@ import shutil
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Export YOLO model to ONNX format.")
-    parser.add_argument("input", type=Path, help="Path to the input YOLO model file.")
-    parser.add_argument("output", type=Path, help="Path to the output ONNX model file.")
+    parser.add_argument("--input", type=Path, help="Path to the input YOLO model .pt file.")
+    parser.add_argument("--output", type=Path, help="Path to the output ONNX model .onnx file.")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size for export (default: 1).")
     return parser.parse_args()      
 
