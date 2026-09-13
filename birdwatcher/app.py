@@ -3,16 +3,17 @@ import threading
 from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+import onnxruntime as ort
 
 from video_processor import VideoProcessor
+from constants import ALLOWED_BATCH_SIZES
 
-
-ALLOWED_BATCH_SIZES = (1, 2, 4, 8, 16, 32, 64, 128)
 
 gpu_info = "Select to accelerate processing on devices with an NVIDIA GPU or Apple M-Series chip. \
 Falls back to CPU if no accelerator is available."
 
-batch_size_info = "Larger batch sizes can speed up processing, but require more memory."
+batch_size_info = "Larger batch sizes can speed up processing on GPUs, but require more memory. \
+If you are not using a GPU, small batch sizes are recommended."
 
 sampling_interval_info = "The number of seconds between analysed video frames."
 
@@ -272,13 +273,14 @@ class BirdWatcherApp:
 			messagebox.showerror("Invalid output directory", str(error))
 			return
 		use_gpu = self.use_gpu.get()
+		device = self._resolve_device(use_gpu)
 		self.cancel_event = threading.Event()
 		self.processing = True
 		self.detection_progress.set(0)
 		self.classification_progress.set(0)
 		self.output_progress.set(0)
 		self._set_active_stage("Finding birds")
-		self.status.set("")
+		self.status.set(f"Device: {device}")
 		self.process_button.configure(text="Cancel")
 		self._set_controls_enabled(False)
 		self.process_button.configure(state="normal")
@@ -288,7 +290,7 @@ class BirdWatcherApp:
 				video_path,
 				output_dir,
 				sample_interval,
-				use_gpu,
+				device,
 				batch_size,
 				box_threshold,
 				class_threshold,
@@ -297,6 +299,16 @@ class BirdWatcherApp:
 			daemon=True,
 		)
 		self.worker.start()
+
+	@staticmethod
+	def _resolve_device(use_gpu):
+		if use_gpu:
+			providers = ort.get_available_providers()
+			if "CUDAExecutionProvider" in providers:
+				return "cuda"
+			if "CoreMLExecutionProvider" in providers:
+				return "mps"
+		return "cpu"
 
 	def _read_and_validate(self):
 		video_text = self.video_path.get().strip()
@@ -341,7 +353,7 @@ class BirdWatcherApp:
 		video_path,
 		output_dir,
 		sample_interval,
-		use_gpu,
+		device,
 		batch_size,
 		box_threshold,
 		class_threshold,
@@ -352,7 +364,7 @@ class BirdWatcherApp:
 				video_path=video_path,
 				output_dir=output_dir,
 				sample_interval=sample_interval,
-				use_gpu=use_gpu,
+				device=device,
 				batch_size=batch_size,
 				box_conf_threshold=box_threshold,
 				class_conf_threshold=class_threshold,

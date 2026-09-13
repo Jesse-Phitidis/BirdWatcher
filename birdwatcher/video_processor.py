@@ -7,9 +7,7 @@ from copy import deepcopy
 import pandas as pd
 from model_runner import DetectionModel, ClassificationModel
 from utils import get_asset_path    
-
-
-allowed_batch_sizes = [1,2,4,8,16,32,64,128]
+from constants import ALLOWED_BATCH_SIZES
 
 
 class VideoProcessor:
@@ -22,7 +20,7 @@ class VideoProcessor:
             video_path: Path,
             output_dir: Path,
             sample_interval: float,
-            use_gpu: bool,
+            device: str,
             batch_size: int,
             box_conf_threshold: float,
             class_conf_threshold: float,
@@ -44,7 +42,7 @@ class VideoProcessor:
 
         # modify batch size if it is less than total samples
         if total_samples < batch_size:
-            batch_size = [b for b in allowed_batch_sizes if b <= total_samples][-1]
+            batch_size = [b for b in ALLOWED_BATCH_SIZES if b <= total_samples][-1]
 
         # create output directory
         output_dir.mkdir(exist_ok=True, parents=False)
@@ -52,7 +50,7 @@ class VideoProcessor:
         ### 2. detection stage ###
 
         # initialise detection model
-        model = DetectionModel(use_gpu=use_gpu, batch_size=batch_size, threshold=box_conf_threshold)
+        model = DetectionModel(device=device, batch_size=batch_size, threshold=box_conf_threshold)
 
         # read frames at frame rate and run detection in batches
         batch = []
@@ -77,7 +75,7 @@ class VideoProcessor:
         ### 3. classification stage ###
 
         # initialise classification model
-        model = ClassificationModel(use_gpu=use_gpu, batch_size=batch_size, threshold=class_conf_threshold)
+        model = ClassificationModel(device=device, batch_size=batch_size, threshold=class_conf_threshold)
 
         # classify each box in each frame
         cap = cv2.VideoCapture(video_path)

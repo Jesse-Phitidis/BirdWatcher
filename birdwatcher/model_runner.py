@@ -7,31 +7,17 @@ from pathlib import Path
 from utils import get_asset_path
 
 
-gpu_providers = [
-    "CUDAExecutionProvider",    
-    "CoreMLExecutionProvider",  
-    "CPUExecutionProvider"       
-]
-
-cpu_providers = [ 
-    "CPUExecutionProvider"       
-]
+providers_by_device = {
+    "cuda": ["CUDAExecutionProvider", "CPUExecutionProvider"],
+    "mps": ["CoreMLExecutionProvider", "CPUExecutionProvider"],
+    "cpu": ["CPUExecutionProvider"],
+}
 
 
 class DetectionModel:
 
-    def __init__(self, use_gpu: bool, batch_size: int, threshold: float):
-
-        if use_gpu:
-            providers = ort.get_available_providers()
-            if "CUDAExecutionProvider" in providers:
-                self.device = "cuda"
-            elif "CoreMLExecutionProvider" in providers:
-                self.device = "mps"
-            else:
-                self.device = "cpu"
-        else:
-            self.device = "cpu"
+    def __init__(self, device: str, batch_size: int, threshold: float):
+        self.device = device
 
         self.batch_size = batch_size
         self.threshold = threshold
@@ -56,9 +42,8 @@ class DetectionModel:
 
 class ClassificationModel:
 
-    def __init__(self, use_gpu: bool, batch_size: int, threshold: float):
-
-        providers = gpu_providers if use_gpu else cpu_providers
+    def __init__(self, device: str, batch_size: int, threshold: float):
+        providers = providers_by_device[device]
         self.batch_size = batch_size
         self.threshold = threshold
         self.model = ort.InferenceSession(get_asset_path(f"assets/models/classifier_b{batch_size}.onnx"), providers=providers)
