@@ -8,20 +8,30 @@ from utils import get_asset_path
 
 
 providers_by_device = {
-    "cuda": ["CUDAExecutionProvider", "CPUExecutionProvider"],
-    "mps": ["CoreMLExecutionProvider", "CPUExecutionProvider"],
+    "cuda": ["CUDAExecutionProvider"],
+    "mps": ["CoreMLExecutionProvider"],
     "cpu": ["CPUExecutionProvider"],
 }
 
 
 class DetectionModel:
 
-    def __init__(self, device: str, batch_size: int, threshold: float):
+    def __init__(
+        self,
+        device: str,
+        batch_size: int,
+        threshold: float,
+        fast_processing: bool = False,
+    ):
         self.device = device
 
         self.batch_size = batch_size
         self.threshold = threshold
-        self.model = YOLO(get_asset_path(f"assets/models/yolo26x_b{batch_size}.onnx"), task="detect")
+        model_size = "m" if fast_processing else "x"
+        self.model = YOLO(
+            get_asset_path(f"assets/models/yolo26{model_size}_b{batch_size}.onnx"),
+            task="detect",
+        )
 
     def __call__(self, x: list) -> tuple[list[list], int]:
         short = self.batch_size - len(x)

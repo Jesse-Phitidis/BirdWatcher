@@ -27,6 +27,7 @@ class VideoProcessor:
             progress_callback: Callable,
             cancel_event: threading.Event,
             multi_colour: bool = False,
+            fast_processing: bool = False,
     ):
 
         ### 1. set up ###
@@ -50,7 +51,12 @@ class VideoProcessor:
         ### 2. detection stage ###
 
         # initialise detection model
-        model = DetectionModel(device=device, batch_size=batch_size, threshold=box_conf_threshold)
+        model = DetectionModel(
+            device=device,
+            batch_size=batch_size,
+            threshold=box_conf_threshold,
+            fast_processing=fast_processing,
+        )
 
         # read frames at frame rate and run detection in batches
         batch = []

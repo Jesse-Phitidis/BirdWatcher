@@ -19,7 +19,7 @@ sampling_interval_info = "The number of seconds between analysed video frames."
 
 box_confidence_threshold_info = "Out of the objects which the AI model thinks are birds, \
 only those with a confidence level above this threshold will be considered as actual birds. \
-Recommended default is 0.0 but increase the threshold if you are getting lots of false positive detections."
+Recommended default is 0.25 but increase the threshold if you are getting lots of false positive detections."
 
 class_confidence_threshold_info = "How confident should the AI model be before classifying a bird. \
 Recommended default is 0.90-0.99. Increase the threshold if you are getting lots incorrect classifications. \
@@ -27,6 +27,9 @@ Any bird for which the AI's confidence is below this threshold gets classed as '
 
 multi_colour_info = "Use the RGB colour assigned to each bird class for its box and label. \
 When disabled, boxes and labels are shown in red. Unknown detections remain white."
+
+fast_processing_info = "Use a lighter weight model for the bird finding stage. \
+This can speed up processing, but may reduce detection accuracy."
 
 class BirdWatcherApp:
 	def __init__(self, root: tk.Tk):
@@ -40,8 +43,9 @@ class BirdWatcherApp:
 		self.sample_interval = tk.StringVar(value="1.0")
 		self.use_gpu = tk.BooleanVar(value=False)
 		self.multi_colour = tk.BooleanVar(value=False)
+		self.fast_processing = tk.BooleanVar(value=False)
 		self.batch_size = tk.StringVar(value="1")
-		self.box_threshold = tk.StringVar(value="0.0")
+		self.box_threshold = tk.StringVar(value="0.25")
 		self.class_threshold = tk.StringVar(value="0.90")
 		self.detection_progress = tk.DoubleVar(value=0)
 		self.classification_progress = tk.DoubleVar(value=0)
@@ -152,14 +156,21 @@ class BirdWatcherApp:
 			self.advanced_frame, 0, "Use GPU", gpu_info, column=2
 		)
 		ttk.Checkbutton(
-			self.advanced_frame, text="Multi-colour", variable=self.multi_colour
+			self.advanced_frame, text="Fast processing", variable=self.fast_processing
 		).grid(row=1, column=0, columnspan=2, sticky="w", pady=5)
 		self._info_button(
-			self.advanced_frame, 1, "Multi-colour", multi_colour_info, column=2
+			self.advanced_frame, 1, "Fast processing", fast_processing_info, column=2
+		)
+
+		ttk.Checkbutton(
+			self.advanced_frame, text="Multi-colour", variable=self.multi_colour
+		).grid(row=2, column=0, columnspan=2, sticky="w", pady=5)
+		self._info_button(
+			self.advanced_frame, 2, "Multi-colour", multi_colour_info, column=2
 		)
 
 		ttk.Label(self.advanced_frame, text="Batch size").grid(
-			row=2, column=0, sticky="w", pady=5
+			row=3, column=0, sticky="w", pady=5
 		)
 		self.batch_menu = ttk.Combobox(
 			self.advanced_frame,
@@ -168,19 +179,19 @@ class BirdWatcherApp:
 			state="readonly",
 			width=10,
 		)
-		self.batch_menu.grid(row=2, column=1, sticky="w", padx=(12, 8), pady=5)
+		self.batch_menu.grid(row=3, column=1, sticky="w", padx=(12, 8), pady=5)
 		self._info_button(
-			self.advanced_frame, 2, "Batch size", batch_size_info, column=2
+			self.advanced_frame, 3, "Batch size", batch_size_info, column=2
 		)
 
 		self._add_threshold_setting(
-			row=3,
+			row=4,
 			label="Box confidence threshold",
 			variable=self.box_threshold,
 			title="Box confidence threshold",
 		)
 		self._add_threshold_setting(
-			row=4,
+			row=5,
 			label="Class confidence threshold",
 			variable=self.class_threshold,
 			title="Class confidence threshold",
@@ -267,6 +278,7 @@ class BirdWatcherApp:
 			class_threshold,
 		) = values
 		multi_colour = self.multi_colour.get()
+		fast_processing = self.fast_processing.get()
 		try:
 			output_dir.mkdir(parents=True, exist_ok=True)
 		except OSError as error:
@@ -295,6 +307,7 @@ class BirdWatcherApp:
 				box_threshold,
 				class_threshold,
 				multi_colour,
+				fast_processing,
 			),
 			daemon=True,
 		)
@@ -358,6 +371,7 @@ class BirdWatcherApp:
 		box_threshold,
 		class_threshold,
 		multi_colour,
+		fast_processing,
 	):
 		try:
 			result = VideoProcessor().process(
@@ -369,6 +383,7 @@ class BirdWatcherApp:
 				box_conf_threshold=box_threshold,
 				class_conf_threshold=class_threshold,
 				multi_colour=multi_colour,
+				fast_processing=fast_processing,
 				progress_callback=lambda fraction, stage: self.messages.put(
 					("progress", fraction, stage)
 				),
