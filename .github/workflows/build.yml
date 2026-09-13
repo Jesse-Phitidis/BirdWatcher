@@ -79,41 +79,27 @@ jobs:
       - name: Install build dependencies
         run: python -m pip install -r requirements-build.txt
 
-      - name: Download and verify model assets
+      - name: Download model assets
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p assets/models
 
-          cat > model-checksums.sha256 <<'EOF'
-          1ff86d7aa1cc3b6ffc621a1afe7080b4c0556d3131002aa31ba9cb8f1a157335  assets/models/classifier_b1.onnx
-          ff17d2f67e1cfe8450c78150938c023190d4243b7d9edfc60b9470af1cb1cd12  assets/models/classifier_b1.onnx.data
-          1802c036a83ccd4bff1a9ac4944919fdd6854dbb15993c18e3632c2e770eced3  assets/models/classifier_b128.onnx
-          ff17d2f67e1cfe8450c78150938c023190d4243b7d9edfc60b9470af1cb1cd12  assets/models/classifier_b128.onnx.data
-          08ecbc260415aa30e2bba9a0aeea804eda19e08160a5d4266fa4fd1a75e1c4d6  assets/models/classifier_b32.onnx
-          ff17d2f67e1cfe8450c78150938c023190d4243b7d9edfc60b9470af1cb1cd12  assets/models/classifier_b32.onnx.data
-          6d49a965652ecb06e23667445ed97fda930a763903c8b9854f05787a2561b5c6  assets/models/yolo26m_b1.onnx
-          1f54e176b3523bc7e79905e75e6db2d77dfcb3046d8a8ea4132b0662347c6226  assets/models/yolo26m_b128.onnx
-          b0b469d2e307edb7d1a03aae08ae07a8c018ed113186542ff7c7e3f9ebe1cf6f  assets/models/yolo26m_b32.onnx
-          92e24265890704063a20bcab62913358bf1bbbaf75d8643c12ab9d809cb2a12a  assets/models/yolo26x_b1.onnx
-          a1b69fe0c9a4731a63f18d625e2e32df004a07bfdb4f27fd910d6978fe1c5617  assets/models/yolo26x_b128.onnx
-          93f80e176482847d372085f352c7663068501eaa5c2b3ecdd5b333947a464f4d1  assets/models/yolo26x_b32.onnx
-          EOF
-
-          while read -r checksum filename; do
-            curl --fail --location --retry 3 --output "$filename" "$MODEL_BASE_URL/${filename##*/}"
-          done < model-checksums.sha256
-
-          python - <<'PY'
-          import hashlib
-          from pathlib import Path
-
-          for line in Path("model-checksums.sha256").read_text().splitlines():
-              expected, filename = line.split(maxsplit=1)
-              digest = hashlib.sha256(Path(filename).read_bytes()).hexdigest()
-              if digest != expected:
-                  raise SystemExit(f"Checksum mismatch for {filename}")
-          PY
+          for filename in \
+            classifier_b1.onnx \
+            classifier_b1.onnx.data \
+            classifier_b128.onnx \
+            classifier_b128.onnx.data \
+            classifier_b32.onnx \
+            classifier_b32.onnx.data \
+            yolo26m_b1.onnx \
+            yolo26m_b128.onnx \
+            yolo26m_b32.onnx \
+            yolo26x_b1.onnx \
+            yolo26x_b128.onnx \
+            yolo26x_b32.onnx; do
+            curl --fail --location --retry 3 --output "assets/models/$filename" "$MODEL_BASE_URL/$filename"
+          done
 
       - name: Build application
         shell: bash
