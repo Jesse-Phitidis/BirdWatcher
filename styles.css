@@ -64,6 +64,18 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 .download-card:hover { background: var(--lime); transform: translateY(-5px); }
 .card-icon { font-size: 32px; }.card-platform { align-self: end; font-size: 25px; font-weight: 600; }.card-action { font-family: var(--mono); font-size: 11px; text-transform: uppercase; }
 .fallback-note { color: var(--muted); margin: 22px 0 0; }
+.install-guide { border-top: 1px solid var(--line); margin-top: 80px; padding-top: 58px; }
+.install-guide-heading { align-items: baseline; display: flex; gap: 28px; margin-bottom: 32px; }
+.install-guide-heading .eyebrow { margin: 0 0 0 auto; order: 2; text-align: right; }
+.install-guide h3 { font-size: clamp(30px, 4vw, 48px); letter-spacing: -.05em; line-height: 1; margin: 0; }
+.install-guide-heading h3 { order: 1; }
+.install-grid { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); }
+.install-card { border-top: 1px solid var(--ink); padding-top: 18px; }
+.install-card h4 { font-size: 22px; margin: 0 0 18px; }
+.install-card ol { color: var(--muted); line-height: 1.55; margin: 0; padding-left: 20px; }
+.install-card li { padding-left: 5px; }
+.install-card li + li { margin-top: 12px; }
+code { background: var(--sky); color: var(--ink); font-family: var(--mono); font-size: .85em; padding: 2px 4px; }
 .supported-birds { border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 2fr; padding: 100px 0 110px; }
 .supported-birds > .section-number { text-align: left; }
 .supported-birds h2 { font-size: clamp(46px, 6vw, 82px); }
@@ -77,6 +89,6 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
   .hero { padding: 70px 0 90px; }
   h1 { font-size: clamp(62px, 19vw, 100px); }.hero-art { margin-top: 55px; }.hero-art img { aspect-ratio: 4 / 3; object-fit: cover; }
   .story { gap: 25px; grid-template-columns: 1fr; padding: 75px 0 95px; }.story > .section-number, .story > div { grid-column: auto; grid-row: auto; }.story h2, .downloads h2 { font-size: 54px; }
-  .downloads { padding: 75px 0 60px; }.downloads-heading { align-items: start; flex-direction: column; gap: 30px; }.download-grid { grid-template-columns: 1fr; }.download-card { min-height: 150px; }
+  .downloads { padding: 75px 0 60px; }.downloads-heading { align-items: start; flex-direction: column; gap: 30px; }.download-grid { grid-template-columns: 1fr; }.download-card { min-height: 150px; }.install-guide { margin-top: 60px; padding-top: 42px; }.install-guide-heading { align-items: start; flex-direction: column; gap: 14px; }.install-guide-heading .eyebrow { margin: 0; text-align: left; }.install-grid { grid-template-columns: 1fr; }.install-card + .install-card { margin-top: 30px; }
   .supported-birds { gap: 25px; grid-template-columns: 1fr; padding: 75px 0 85px; }.supported-birds h2 { font-size: 54px; }.bird-list { grid-template-columns: repeat(2, 1fr); margin-top: 36px; }
 }
