@@ -87,7 +87,7 @@ code { background: var(--sky); color: var(--ink); font-family: var(--mono); font
   .page-shell { padding: 0 24px; }
   .topbar { padding: 20px 0; }.source-link { font-size: 9px; }
   .hero { padding: 70px 0 90px; }
-  h1 { font-size: clamp(62px, 19vw, 100px); }.hero-art { margin-top: 55px; }.hero-art img { aspect-ratio: 4 / 3; object-fit: cover; }
+  h1 { font-size: clamp(62px, 19vw, 100px); }.hero-art { margin-top: 55px; }.hero-art img { aspect-ratio: 4 / 3; object-fit: cover; object-position: right center; }
   .story { gap: 25px; grid-template-columns: 1fr; padding: 75px 0 95px; }.story > .section-number, .story > div { grid-column: auto; grid-row: auto; }.story h2, .downloads h2 { font-size: 54px; }
   .downloads { padding: 75px 0 60px; }.downloads-heading { align-items: start; flex-direction: column; gap: 30px; }.download-grid { grid-template-columns: 1fr; }.download-card { min-height: 150px; }.install-guide { margin-top: 60px; padding-top: 42px; }.install-guide-heading { align-items: start; flex-direction: column; gap: 14px; }.install-guide-heading .eyebrow { margin: 0; text-align: left; }.install-grid { grid-template-columns: 1fr; }.install-card + .install-card { margin-top: 30px; }
   .supported-birds { gap: 25px; grid-template-columns: 1fr; padding: 75px 0 85px; }.supported-birds h2 { font-size: 54px; }.bird-list { grid-template-columns: repeat(2, 1fr); margin-top: 36px; }
