@@ -215,7 +215,7 @@ jobs:
 
             [Tasks]
             Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional icons:"
-            EOF
+          EOF
 
             # Execute Inno Setup Compiler (Pre-installed on GitHub Actions windows-latest)
             iscc installer.iss
