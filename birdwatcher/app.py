@@ -14,8 +14,7 @@ from video_processor import VideoProcessor
 from constants import ALLOWED_BATCH_SIZES
 
 
-gpu_info = "Select to accelerate processing on devices with an NVIDIA GPU or Apple M-Series chip. \
-Falls back to CPU if no accelerator is available."
+device_info = "Select the device used for processing. Only devices available in this installation are listed."
 
 batch_size_info = "Larger batch sizes can speed up processing on GPUs, but require more memory. \
 If you are not using a GPU, small batch sizes are recommended."
@@ -46,7 +45,8 @@ class BirdWatcherApp:
 		self.video_path = tk.StringVar()
 		self.output_dir = tk.StringVar()
 		self.sample_interval = tk.StringVar(value="1.0")
-		self.use_gpu = tk.BooleanVar(value=False)
+		self.device_options = self._available_devices()
+		self.device = tk.StringVar(value=self.device_options[0][1])
 		self.multi_colour = tk.BooleanVar(value=False)
 		self.fast_processing = tk.BooleanVar(value=False)
 		self.batch_size = tk.StringVar(value="1")
@@ -154,28 +154,22 @@ class BirdWatcherApp:
 		self.process_button.grid(row=13, column=0, columnspan=4, pady=(18, 0))
 
 	def _build_advanced_settings(self):
-		ttk.Checkbutton(self.advanced_frame, text="Use GPU", variable=self.use_gpu).grid(
-			row=0, column=0, columnspan=2, sticky="w", pady=5
+		tk.Label(self.advanced_frame, text="Device").grid(
+			row=0, column=0, sticky="w", pady=5
 		)
+		self.device_menu = ttk.Combobox(
+			self.advanced_frame,
+			textvariable=self.device,
+			values=[label for _, label in self.device_options],
+			state="readonly",
+			width=18,
+		)
+		self.device_menu.grid(row=0, column=1, sticky="w", padx=(12, 8), pady=5)
 		self._info_button(
-			self.advanced_frame, 0, "Use GPU", gpu_info, column=2
+			self.advanced_frame, 0, "Device", device_info, column=2
 		)
-		ttk.Checkbutton(
-			self.advanced_frame, text="Fast processing", variable=self.fast_processing
-		).grid(row=1, column=0, columnspan=2, sticky="w", pady=5)
-		self._info_button(
-			self.advanced_frame, 1, "Fast processing", fast_processing_info, column=2
-		)
-
-		ttk.Checkbutton(
-			self.advanced_frame, text="Multi-colour", variable=self.multi_colour
-		).grid(row=2, column=0, columnspan=2, sticky="w", pady=5)
-		self._info_button(
-			self.advanced_frame, 2, "Multi-colour", multi_colour_info, column=2
-		)
-
 		ttk.Label(self.advanced_frame, text="Batch size").grid(
-			row=3, column=0, sticky="w", pady=5
+			row=1, column=0, sticky="w", pady=5
 		)
 		self.batch_menu = ttk.Combobox(
 			self.advanced_frame,
@@ -184,9 +178,23 @@ class BirdWatcherApp:
 			state="readonly",
 			width=10,
 		)
-		self.batch_menu.grid(row=3, column=1, sticky="w", padx=(12, 8), pady=5)
+		self.batch_menu.grid(row=1, column=1, sticky="w", padx=(12, 8), pady=5)
 		self._info_button(
-			self.advanced_frame, 3, "Batch size", batch_size_info, column=2
+			self.advanced_frame, 1, "Batch size", batch_size_info, column=2
+		)
+
+		ttk.Checkbutton(
+			self.advanced_frame, text="Fast processing", variable=self.fast_processing
+		).grid(row=2, column=0, columnspan=2, sticky="w", pady=5)
+		self._info_button(
+			self.advanced_frame, 2, "Fast processing", fast_processing_info, column=2
+		)
+
+		ttk.Checkbutton(
+			self.advanced_frame, text="Multi-colour", variable=self.multi_colour
+		).grid(row=3, column=0, columnspan=2, sticky="w", pady=5)
+		self._info_button(
+			self.advanced_frame, 3, "Multi-colour", multi_colour_info, column=2
 		)
 
 		self._add_threshold_setting(
@@ -289,15 +297,19 @@ class BirdWatcherApp:
 		except OSError as error:
 			messagebox.showerror("Invalid output directory", str(error))
 			return
-		use_gpu = self.use_gpu.get()
-		device = self._resolve_device(use_gpu)
+		device = next(
+			device_value
+			for device_value, device_label in self.device_options
+			if device_label == self.device.get()
+		)
+		device_label = self.device.get()
 		self.cancel_event = threading.Event()
 		self.processing = True
 		self.detection_progress.set(0)
 		self.classification_progress.set(0)
 		self.output_progress.set(0)
 		self._set_active_stage("Finding birds")
-		self.status.set(f"Device: {device}")
+		self.status.set(f"Processing on: {device_label}")
 		self.process_button.configure(text="Cancel")
 		self._set_controls_enabled(False)
 		self.process_button.configure(state="normal")
@@ -319,14 +331,14 @@ class BirdWatcherApp:
 		self.worker.start()
 
 	@staticmethod
-	def _resolve_device(use_gpu):
-		if use_gpu:
-			providers = ort.get_available_providers()
-			if "CUDAExecutionProvider" in providers:
-				return "cuda"
-			if "CoreMLExecutionProvider" in providers:
-				return "mps"
-		return "cpu"
+	def _available_devices():
+		providers = ort.get_available_providers()
+		devices = [("cpu", "CPU")]
+		if "CUDAExecutionProvider" in providers:
+			devices.append(("cuda", "CUDA (NVIDIA GPU)"))
+		if "CoreMLExecutionProvider" in providers:
+			devices.append(("mps", "MPS (Apple Silicon GPU)"))
+		return devices
 
 	def _read_and_validate(self):
 		video_text = self.video_path.get().strip()
