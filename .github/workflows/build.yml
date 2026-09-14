@@ -16,7 +16,6 @@ permissions:
 
 env:
   PYTHON_VERSION: "3.12"
-  MODEL_RELEASE: "model-assets-v1"
   MODEL_BASE_URL: "https://github.com/Jesse-Phitidis/BirdWatcher/releases/download/model-assets-v1"
 
 jobs:
