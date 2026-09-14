@@ -126,6 +126,7 @@ jobs:
             --windowed \
             --add-data "assets${data_separator}assets" \
             --collect-all onnxruntime \
+            --copy-metadata onnxruntime \
             birdwatcher/app.py
 
       - name: Package application

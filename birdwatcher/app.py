@@ -1,9 +1,14 @@
 import queue
+# import os
+# import sys
 import threading
 from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import onnxruntime as ort
+
+# if getattr(sys, "frozen", False):
+# 	os.environ.setdefault("ULTRALYTICS_SKIP_REQUIREMENTS_CHECKS", "1")
 
 from video_processor import VideoProcessor
 from constants import ALLOWED_BATCH_SIZES
