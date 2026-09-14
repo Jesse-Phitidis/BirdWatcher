@@ -23,9 +23,10 @@ jobs:
 
       - name: Prepare site
         run: |
-          mkdir -p _site/assets/icons
+          mkdir -p _site/assets/icons _site/assets/page
           cp index.html styles.css script.js _site/
           cp assets/icons/icon.jpg _site/assets/icons/
+          cp assets/page/goldfinch-banner.png _site/assets/page/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

@@ -35,7 +35,7 @@ a { color: inherit; }
 .source-link { text-decoration: none; }
 .source-link:hover, .card-action { color: var(--leaf); }
 
-.hero { display: grid; grid-template-columns: .92fr 1.08fr; min-height: 690px; padding: 75px 0 100px; }
+.hero { padding: 75px 0 100px; }
 .hero-copy { align-self: center; position: relative; z-index: 1; }
 .eyebrow { color: var(--leaf); margin: 0 0 25px; }
 h1, h2 { font-weight: 600; letter-spacing: -.07em; line-height: .94; margin: 0; }
@@ -45,22 +45,12 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 .primary-link { background: var(--ink); color: var(--paper); display: inline-flex; gap: 24px; padding: 17px 20px; text-decoration: none; transition: background .2s, transform .2s; }
 .primary-link:hover { background: var(--leaf); transform: translateY(-3px); }
 
-.hero-art { background: var(--sky); min-height: 520px; overflow: hidden; position: relative; }
-.sun { background: var(--lime); border-radius: 50%; height: 260px; position: absolute; right: 11%; top: 10%; width: 260px; }
-.branch { background: var(--ink); border-radius: 100%; height: 25px; position: absolute; transform: rotate(-9deg); width: 120%; }
-.branch-back { left: -15%; top: 63%; }
-.branch-front { bottom: 12%; left: -15%; transform: rotate(10deg); }
-.bird-silhouette { height: 180px; left: 43%; position: absolute; top: 28%; transform: rotate(-7deg); width: 230px; }
-.bird-body { background: var(--ink); border-radius: 50% 48% 40% 45%; height: 122px; left: 42px; position: absolute; top: 40px; width: 165px; }
-.bird-wing { background: var(--leaf); border-radius: 70% 30% 70% 30%; height: 75px; left: 54px; position: absolute; top: 54px; transform: rotate(18deg); width: 120px; }
-.bird-tail { border-bottom: 72px solid var(--ink); border-left: 20px solid transparent; border-right: 18px solid transparent; left: 20px; position: absolute; top: 85px; transform: rotate(35deg); width: 0; }
-.bird-head { background: var(--ink); border-radius: 50%; height: 75px; position: absolute; right: 2px; top: 10px; width: 75px; }
-.bird-eye { background: var(--lime); border-radius: 50%; height: 9px; position: absolute; right: 22px; top: 25px; width: 9px; }
-.bird-beak { border-bottom: 10px solid transparent; border-left: 35px solid var(--orange); border-top: 10px solid transparent; position: absolute; right: -28px; top: 32px; }
-.art-label { color: var(--leaf); font-family: var(--mono); font-size: 10px; position: absolute; }
-.label-one { left: 8%; top: 9%; }.label-two { bottom: 7%; right: 8%; }
+.hero-art { background: var(--sky); margin-top: 80px; overflow: hidden; }
+.hero-art img { aspect-ratio: 80 / 27; display: block; object-fit: cover; width: 100%; }
 
-.story { border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 2fr; padding: 100px 0 140px; }
+.story { border-top: 1px solid var(--line); display: grid; grid-template-columns: 2fr .9fr; padding: 100px 0 140px; }
+.story > .section-number { grid-column: 2; grid-row: 1; text-align: right; }
+.story > div { grid-column: 1; grid-row: 1; }
 .section-number { color: var(--orange); margin: 8px 0; }
 .story h2, .downloads h2 { font-size: clamp(46px, 6vw, 82px); }
 .story h2 span { color: var(--muted); }
@@ -74,13 +64,19 @@ h1 em, h2 em { color: var(--orange); font-style: normal; }
 .download-card:hover { background: var(--lime); transform: translateY(-5px); }
 .card-icon { font-size: 32px; }.card-platform { align-self: end; font-size: 25px; font-weight: 600; }.card-action { font-family: var(--mono); font-size: 11px; text-transform: uppercase; }
 .fallback-note { color: var(--muted); margin: 22px 0 0; }
+.supported-birds { border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 2fr; padding: 100px 0 110px; }
+.supported-birds > .section-number { text-align: left; }
+.supported-birds h2 { font-size: clamp(46px, 6vw, 82px); }
+.bird-list { display: grid; gap: 0 24px; grid-template-columns: repeat(4, 1fr); list-style: none; margin: 48px 0 0; padding: 0; }
+.bird-list li { border-top: 1px solid var(--line); color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 13px 0; }
 .footer { border-top: 1px solid var(--line); display: flex; font-family: var(--mono); font-size: 10px; justify-content: space-between; padding: 22px 0 30px; text-transform: uppercase; }
 
 @media (max-width: 760px) {
   .page-shell { padding: 0 24px; }
   .topbar { padding: 20px 0; }.source-link { font-size: 9px; }
-  .hero { display: flex; flex-direction: column; gap: 55px; padding: 70px 0 90px; }
-  h1 { font-size: clamp(62px, 19vw, 100px); }.hero-art { min-height: 390px; }.sun { height: 180px; width: 180px; }.bird-silhouette { left: 28%; transform: scale(.75) rotate(-7deg); transform-origin: center; top: 24%; }
-  .story { gap: 25px; grid-template-columns: 1fr; padding: 75px 0 95px; }.story h2, .downloads h2 { font-size: 54px; }
+  .hero { padding: 70px 0 90px; }
+  h1 { font-size: clamp(62px, 19vw, 100px); }.hero-art { margin-top: 55px; }.hero-art img { aspect-ratio: 4 / 3; object-fit: cover; }
+  .story { gap: 25px; grid-template-columns: 1fr; padding: 75px 0 95px; }.story > .section-number, .story > div { grid-column: auto; grid-row: auto; }.story h2, .downloads h2 { font-size: 54px; }
   .downloads { padding: 75px 0 60px; }.downloads-heading { align-items: start; flex-direction: column; gap: 30px; }.download-grid { grid-template-columns: 1fr; }.download-card { min-height: 150px; }
+  .supported-birds { gap: 25px; grid-template-columns: 1fr; padding: 75px 0 85px; }.supported-birds h2 { font-size: 54px; }.bird-list { grid-template-columns: repeat(2, 1fr); margin-top: 36px; }
 }
