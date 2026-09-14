@@ -55,10 +55,10 @@ jobs:
         include:
           - os: windows-latest
             runner_os: Windows
-            archive_extension: zip
+            archive_extension: exe
           - os: macos-latest
             runner_os: macOS
-            archive_extension: zip
+            archive_extension: dmg
           - os: ubuntu-latest
             runner_os: Linux
             archive_extension: tar.gz
@@ -138,16 +138,36 @@ jobs:
         run: |
           set -euo pipefail
           archive="BirdWatcher-${PLATFORM_NAME}-${RUNNER_ARCH}-${RELEASE_TAG}.${ARCHIVE_EXTENSION}"
+          
+          # ==========================================
+          # macOS Packaging (DMG)
+          # ==========================================
           if [ "$RUNNER_OS" = "macOS" ]; then
             source="dist/BirdWatcher.app"
             if [ ! -d "$source" ]; then
               echo "PyInstaller macOS app bundle not found: $source" >&2
               exit 1
             fi
-            ditto -c -k --sequesterRsrc --keepParent "$source" "$archive"
+            
+            brew install create-dmg
+            
+            create-dmg \
+              --volname "BirdWatcher Installer" \
+              --window-pos 200 120 \
+              --window-size 600 400 \
+              --icon-size 100 \
+              --icon "BirdWatcher.app" 150 190 \
+              --hide-extension "BirdWatcher.app" \
+              --app-drop-link 450 190 \
+              "$archive" \
+              "$source"
+              
             exit 0
           fi
 
+          # ==========================================
+          # Linux Packaging (TAR.GZ)
+          # ==========================================
           if [ "$RUNNER_OS" = "Linux" ]; then
             source="dist/BirdWatcher/BirdWatcher"
             if [ ! -f "$source" ]; then
@@ -158,31 +178,49 @@ jobs:
             exit 0
           fi
 
+          # ==========================================
+          # Windows Packaging (Inno Setup Installer)
+          # ==========================================
           if [ "$RUNNER_OS" = "Windows" ]; then
             executable="dist/BirdWatcher/BirdWatcher.exe"
-          else
-            executable="dist/BirdWatcher/BirdWatcher"
+            if [ ! -f "$executable" ]; then
+              echo "Expected PyInstaller executable not found: $executable" >&2
+              exit 1
+            fi
+
+            # Inno Setup doesn't like the 'v' in v1.0.0 for AppVersion, so we strip it
+            CLEAN_VERSION="${RELEASE_TAG#v}"
+            BASENAME=$(basename "$archive" .exe)
+
+            # Dynamically write the Inno Setup Script
+            cat <<EOF > installer.iss
+            [Setup]
+            AppName=BirdWatcher
+            AppVersion=$CLEAN_VERSION
+            DefaultDirName={autopf}\BirdWatcher
+            OutputDir=.
+            OutputBaseFilename=$BASENAME
+            Compression=lzma
+            SolidCompression=yes
+            SetupIconFile=assets\icons\icon.ico
+            DisableProgramGroupPage=yes
+
+            [Files]
+            Source: "dist\BirdWatcher\BirdWatcher.exe"; DestDir: "{app}"; Flags: ignoreversion
+            Source: "dist\BirdWatcher\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+            [Icons]
+            Name: "{autoprograms}\BirdWatcher"; Filename: "{app}\BirdWatcher.exe"; IconFilename: "{app}\BirdWatcher.exe"
+            Name: "{autodesktop}\BirdWatcher"; Filename: "{app}\BirdWatcher.exe"; IconFilename: "{app}\BirdWatcher.exe"; Tasks: desktopicon
+
+            [Tasks]
+            Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional icons:"
+            EOF
+
+            # Execute Inno Setup Compiler (Pre-installed on GitHub Actions windows-latest)
+            iscc installer.iss
+            exit 0
           fi
-          if [ ! -f "$executable" ]; then
-            echo "Expected PyInstaller executable not found: $executable" >&2
-            exit 1
-          fi
-
-          python - "$archive" <<'PY'
-          import sys
-          import zipfile
-          from pathlib import Path
-
-          archive = Path(sys.argv[1])
-          source = Path("dist/BirdWatcher")
-          if not source.exists():
-              raise SystemExit(f"PyInstaller output not found: {source}")
-
-          with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as output:
-              for path in source.rglob("*"):
-                  if path.is_file():
-                      output.write(path, Path("BirdWatcher") / path.relative_to(source))
-          PY
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
