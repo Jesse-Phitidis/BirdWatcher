@@ -101,7 +101,7 @@ jobs:
             yolo26x_b1.onnx \
             yolo26x_b128.onnx \
             yolo26x_b32.onnx; do
-            curl --fail --location --retry 3 --output "assets/models/$filename" "$MODEL_BASE_URL/$filename"
+            curl --fail --location --retry 6 --retry-all-errors --retry-delay 2 --max-time 300 --output "assets/models/$filename" "$MODEL_BASE_URL/$filename"
           done
 
       - name: Build application
