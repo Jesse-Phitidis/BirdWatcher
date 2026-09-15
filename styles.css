@@ -81,6 +81,13 @@ code { background: var(--sky); color: var(--ink); font-family: var(--mono); font
 .supported-birds h2 { font-size: clamp(46px, 6vw, 82px); }
 .bird-list { display: grid; gap: 0 24px; grid-template-columns: repeat(4, 1fr); list-style: none; margin: 48px 0 0; padding: 0; }
 .bird-list li { border-top: 1px solid var(--line); color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 13px 0; }
+.report-issue { border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; padding: 100px 0 110px; }
+.report-issue-heading { grid-column: 1; }
+.report-issue-content { max-width: 640px; }
+.report-issue h2 { font-size: clamp(46px, 6vw, 82px); }
+.report-issue-content .eyebrow { margin-left: auto; text-align: right; }
+.report-issue-copy { color: var(--muted); font-size: 17px; line-height: 1.6; margin: 0 0 32px; max-width: 500px; }
+.report-issue-link { gap: 32px; }
 .footer { border-top: 1px solid var(--line); display: flex; font-family: var(--mono); font-size: 10px; justify-content: space-between; padding: 22px 0 30px; text-transform: uppercase; }
 
 @media (max-width: 760px) {
@@ -91,4 +98,5 @@ code { background: var(--sky); color: var(--ink); font-family: var(--mono); font
   .story { gap: 25px; grid-template-columns: 1fr; padding: 75px 0 95px; }.story > .section-number, .story > div { grid-column: auto; grid-row: auto; }.story h2, .downloads h2 { font-size: 54px; }
   .downloads { padding: 75px 0 60px; }.downloads-heading { align-items: start; flex-direction: column; gap: 30px; }.download-grid { grid-template-columns: 1fr; }.download-card { min-height: 150px; }.install-guide { margin-top: 60px; padding-top: 42px; }.install-guide-heading { align-items: start; flex-direction: column; gap: 14px; }.install-guide-heading .eyebrow { margin: 0; text-align: left; }.install-grid { grid-template-columns: 1fr; }.install-card + .install-card { margin-top: 30px; }
   .supported-birds { gap: 25px; grid-template-columns: 1fr; padding: 75px 0 85px; }.supported-birds h2 { font-size: 54px; }.bird-list { grid-template-columns: repeat(2, 1fr); margin-top: 36px; }
+  .report-issue { gap: 25px; grid-template-columns: 1fr; padding: 75px 0 85px; }.report-issue-heading, .report-issue-content { grid-column: auto; }.report-issue h2 { font-size: 54px; }.report-issue-content .eyebrow { margin-left: 0; text-align: left; }.report-issue-copy { margin-top: 30px; }
 }
