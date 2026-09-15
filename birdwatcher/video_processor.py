@@ -138,10 +138,11 @@ class VideoProcessor:
                     probabilities[i],
                     multi_colour,
                 )
-                seconds = int(frame_idx / fps)
-                hours, seconds_remaining = divmod(seconds, 3600)    
-                minutes, seconds = divmod(seconds_remaining, 60)
-                timestamp = f"{hours:02d}h{minutes:02d}m{seconds:02d}s"
+                milliseconds = round(frame_idx * 1000 / fps)
+                hours, milliseconds_remaining = divmod(milliseconds, 3_600_000)
+                minutes, milliseconds_remaining = divmod(milliseconds_remaining, 60_000)
+                seconds, milliseconds = divmod(milliseconds_remaining, 1_000)
+                timestamp = f"{hours:02d}-{minutes:02d}-{seconds:02d}-{milliseconds:03d}"
                 for name in classifications[i]:
                     name_dir = (output_dir / name)
                     name_dir.mkdir(exist_ok=True)
